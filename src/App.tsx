@@ -27,9 +27,7 @@ function Login({ onLogin }: { onLogin: (username: string) => void }) {
     <main className="login-shell">
       <section className="login-card" style={{ margin: '0 auto' }}>
         <div className="login-brand" style={{ textAlign: 'center' }}>
-          <div className="brand-mark" style={{ margin: '0 auto 20px' }}>A</div>
-          <p className="eyebrow">ANEMOSCAN</p>
-          <h1>AnemoScan</h1>
+          <img src="/anemoscan-logo.svg" alt="AnemoScan" style={{ display: 'block', width: 'min(360px, 100%)', height: 'auto', margin: '0 auto 18px' }} />
           <div className="admin-portal-title">Admin Portal</div>
         </div>
         <p className="muted login-description" style={{ textAlign: 'center' }}>Secure access to scan records, AI results and private images.</p>
@@ -123,7 +121,13 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
 
   return (
     <div className="app-shell">
-      <header className="topbar"><div><div className="topbar-title">AnemoScan <span>Admin</span></div><div className="topbar-subtitle">Clinical scan management</div></div><div className="topbar-actions"><span className="user-pill">{username}</span><button className="ghost-button" onClick={onLogout}>Sign out</button></div></header>
+      <header className="topbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/anemoscan-mark.svg" alt="AnemoScan" style={{ width: 44, height: 44, flex: '0 0 auto' }} />
+          <div><div className="topbar-title">AnemoScan <span>Admin</span></div><div className="topbar-subtitle">Clinical scan management</div></div>
+        </div>
+        <div className="topbar-actions"><span className="user-pill">{username}</span><button className="ghost-button" onClick={onLogout}>Sign out</button></div>
+      </header>
       <main className="content">
         <div className="page-heading"><div><p className="eyebrow">OVERVIEW</p><h1>Scan dashboard</h1><p className="muted">Monitor stored conjunctival scans and their binary anemia results.</p></div><button className="ghost-button" onClick={() => void load()}>Refresh</button></div>
         {error && <div className="error-box wide">{error}</div>}
