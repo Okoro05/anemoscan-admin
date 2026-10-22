@@ -24,15 +24,21 @@ function Login({ onLogin }: { onLogin: (username: string) => void }) {
 
   return (
     <main className="login-shell">
-      <section className="login-card">
+      <section className="login-card" style={{ textAlign: 'center' }}>
         <div className="login-brand">
-          <div className="brand-mark">A</div>
-          <p className="eyebrow">ANEMOSCAN</p>
-          <h1>AnemoScan</h1>
-          <div className="admin-portal-title">Admin Portal</div>
+          <div
+            className="brand-mark"
+            style={{ width: 72, height: 72, margin: '0 auto 22px', borderRadius: 18, fontSize: 36 }}
+          >
+            A
+          </div>
+          <p className="eyebrow" style={{ marginBottom: 8 }}>ANEMOSCAN</p>
+          <h1 style={{ marginBottom: 6, fontSize: 'clamp(2.5rem, 8vw, 3.5rem)', lineHeight: 1 }}>AnemoScan</h1>
+          <div className="admin-portal-title" style={{ color: 'rgba(225,255,252,.70)', fontFamily: 'Share Tech Mono, monospace', fontSize: '1rem', letterSpacing: '.18em', textTransform: 'uppercase' }}>
+            Admin Portal
+          </div>
         </div>
-        <p className="muted login-description">Secure access to scan records, AI results and private images.</p>
-        <form onSubmit={submit} className="login-form">
+        <form onSubmit={submit} className="login-form" style={{ textAlign: 'left' }}>
           <label>Username<input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
           <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
           {error && <div className="error-box">{error}</div>}
