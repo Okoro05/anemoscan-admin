@@ -25,17 +25,19 @@ function Login({ onLogin }: { onLogin: (username: string) => void }) {
   return (
     <main className="login-shell">
       <section className="login-card">
-        <div className="brand-mark">A</div>
-        <p className="eyebrow">ANEMOSCAN</p>
-        <h1>Admin portal</h1>
-        <p className="muted">Secure access to scan records, AI results and private images.</p>
+        <div className="login-brand">
+          <div className="brand-mark">A</div>
+          <p className="eyebrow">ANEMOSCAN</p>
+          <h1>AnemoScan</h1>
+          <div className="admin-portal-title">Admin Portal</div>
+        </div>
+        <p className="muted login-description">Secure access to scan records, AI results and private images.</p>
         <form onSubmit={submit} className="login-form">
           <label>Username<input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
           <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
           {error && <div className="error-box">{error}</div>}
           <button className="primary-button" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         </form>
-        <p className="security-note">Admin access is enforced by the AnemoScan backend.</p>
       </section>
     </main>
   )
