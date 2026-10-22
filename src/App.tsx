@@ -5,6 +5,7 @@ import { adminApi, type Capture, type Stats } from './api'
 function Login({ onLogin }: { onLogin: (username: string) => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -24,23 +25,41 @@ function Login({ onLogin }: { onLogin: (username: string) => void }) {
 
   return (
     <main className="login-shell">
-      <section className="login-card" style={{ textAlign: 'center' }}>
+      <section className="login-card">
         <div className="login-brand">
-          <div
-            className="brand-mark"
-            style={{ width: 72, height: 72, margin: '0 auto 22px', borderRadius: 18, fontSize: 36 }}
-          >
-            A
-          </div>
-          <p className="eyebrow" style={{ marginBottom: 8 }}>ANEMOSCAN</p>
-          <h1 style={{ marginBottom: 6, fontSize: 'clamp(2.5rem, 8vw, 3.5rem)', lineHeight: 1 }}>AnemoScan</h1>
-          <div className="admin-portal-title" style={{ color: 'rgba(225,255,252,.70)', fontFamily: 'Share Tech Mono, monospace', fontSize: '1rem', letterSpacing: '.18em', textTransform: 'uppercase' }}>
-            Admin Portal
-          </div>
+          <div className="brand-mark">A</div>
+          <p className="eyebrow">ANEMOSCAN</p>
+          <h1>AnemoScan</h1>
+          <div className="admin-portal-title">Admin Portal</div>
         </div>
-        <form onSubmit={submit} className="login-form" style={{ textAlign: 'left' }}>
+        <p className="muted login-description">Secure access to scan records, AI results and private images.</p>
+        <form onSubmit={submit} className="login-form">
           <label>Username<input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
-          <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+          <label>
+            Password
+            <span className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 4.2A10.9 10.9 0 0112 4c5.2 0 9.2 4.1 10 8-.3 1.3-1 2.6-2 3.7M6.2 6.2C4.4 7.7 3.2 9.5 2 12c.8 3.9 4.8 8 10 8 1.4 0 2.7-.3 3.9-.8" /></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </span>
+          </label>
           {error && <div className="error-box">{error}</div>}
           <button className="primary-button" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         </form>
