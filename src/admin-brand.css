@@ -1,8 +1,0 @@
-.login-card { text-align: center; }
-.login-brand { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.brand-mark { width: 96px; height: 96px; min-width: 96px; min-height: 96px; margin: 0 0 22px; border-radius: 26px; font-size: 54px; border-color: rgba(0,229,212,.72); box-shadow: 0 0 36px rgba(0,229,212,.30), inset 0 0 26px rgba(0,229,212,.08); animation: admin-logo-pulse 2.4s ease-in-out infinite; }
-.brand-name { margin: 0; color: var(--cyan); font-family: "Rajdhani", sans-serif; font-size: clamp(3.6rem, 10vw, 5.1rem); font-weight: 700; line-height: .92; letter-spacing: .045em; text-shadow: 0 0 28px rgba(0,229,212,.28); }
-.admin-portal-title { margin-top: 14px; color: rgba(225,255,252,.82); font-family: "Share Tech Mono", monospace; font-size: 1rem; letter-spacing: .24em; text-transform: uppercase; }
-.login-form { margin-top: 34px; }
-@keyframes admin-logo-pulse { 0%,100% { box-shadow: 0 0 30px rgba(0,229,212,.22), inset 0 0 24px rgba(0,229,212,.07); } 50% { box-shadow: 0 0 46px rgba(0,229,212,.40), inset 0 0 30px rgba(0,229,212,.12); } }
-@media (max-width: 480px) { .brand-mark { width: 82px; height: 82px; min-width: 82px; min-height: 82px; font-size: 46px; } .brand-name { font-size: 3.4rem; } }
