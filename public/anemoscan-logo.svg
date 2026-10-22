@@ -20,5 +20,5 @@
     <path d="M102 61c10-13 23-20 36-20M174 111c-10 13-23 20-36 20" fill="none" stroke="#39FF6A" stroke-width="6" stroke-linecap="round" opacity=".9"/>
   </g>
   <text x="330" y="104" fill="#F2FBFF" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="700" letter-spacing="-2">Anemo<tspan fill="#00E5FF">Scan</tspan></text>
-  <text x="334" y="146" fill="#8EDFF4" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600" letter-spacing="3">AI-POWERED ANEMIA SCREENING</text>
+  <text x="334" y="146" fill="#8EDFF4" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" letter-spacing="2">AI-POWERED ANEMIA SCREENING</text>
 </svg>
