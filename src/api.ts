@@ -110,4 +110,5 @@ export const adminApi = {
   downloadImage: (capture: Capture) => download(`/api/admin/captures/${capture.id}/image`, `${capture.name || `scan-${capture.id}`}.jpg`),
   downloadReport: (capture: Capture) => download(`/api/admin/captures/${capture.id}/report`, `${capture.name || `scan-${capture.id}`}-report.pdf`),
   downloadAll: () => download('/api/admin/export', 'anemoscan-admin-export.zip'),
+  downloadCsv: () => download('/api/admin/export.csv', 'anemoscan-admin-export.csv'),
 }
