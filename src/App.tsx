@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminApi, type Capture, type Stats } from './api'
 
@@ -78,6 +78,72 @@ function ResultBadge({ capture }: { capture: Capture }) {
   return <span className="badge badge-neutral">Not analyzed</span>
 }
 
+const resultOptions = [
+  { value: 'all', label: 'All results' },
+  { value: 'anemia', label: 'Anemia detected' },
+  { value: 'no-anemia', label: 'No anemia' },
+  { value: 'unanalyzed', label: 'Not analyzed' },
+]
+
+function ResultDropdown({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const selected = resultOptions.find((option) => option.value === value) ?? resultOptions[0]
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [])
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', minWidth: 190 }}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: '1px solid rgba(0,229,212,.28)', background: 'rgba(0,229,212,.05)', color: '#eafffd', borderRadius: 12, padding: '12px 13px', textAlign: 'left' }}
+      >
+        <span>{selected.label}</span>
+        <span aria-hidden="true" style={{ color: '#00e5d4', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }}>⌄</span>
+      </button>
+      {open && (
+        <div role="listbox" aria-label="Scan result filter" style={{ position: 'absolute', zIndex: 40, top: 'calc(100% + 6px)', left: 0, right: 0, overflow: 'hidden', border: '1px solid rgba(0,229,212,.32)', borderRadius: 12, background: 'rgba(6,14,26,.98)', boxShadow: '0 16px 36px rgba(0,0,0,.52)', backdropFilter: 'blur(12px)' }}>
+          {resultOptions.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              key={option.value}
+              onClick={() => { onChange(option.value); setOpen(false) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: 0, borderBottom: '1px solid rgba(0,229,212,.08)', padding: '11px 13px', color: option.value === value ? '#00e5d4' : 'rgba(225,255,252,.86)', background: option.value === value ? 'rgba(0,229,212,.10)' : 'transparent', textAlign: 'left' }}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <span aria-hidden="true">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LoadingSpinner({ label = 'Loading…' }: { label?: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="22 16">
+          <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.8s" repeatCount="indefinite" />
+        </circle>
+      </svg>
+      {label}
+    </span>
+  )
+}
+
 function Dashboard({ username, onLogout }: { username: string; onLogout: () => void }) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [captures, setCaptures] = useState<Capture[]>([])
@@ -86,6 +152,7 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
   const [result, setResult] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [downloadBusy, setDownloadBusy] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -114,6 +181,32 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
     }
   }
 
+  async function downloadCapture(kind: 'image' | 'report', capture: Capture) {
+    const key = `${kind}-${capture.id}`
+    setDownloadBusy(key)
+    setError('')
+    try {
+      if (kind === 'image') await adminApi.downloadImage(capture)
+      else await adminApi.downloadReport(capture)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to download file.')
+    } finally {
+      setDownloadBusy(null)
+    }
+  }
+
+  async function downloadAll() {
+    setDownloadBusy('all')
+    setError('')
+    try {
+      await adminApi.downloadAll()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to download export.')
+    } finally {
+      setDownloadBusy(null)
+    }
+  }
+
   const anemiaRate = useMemo(() => {
     if (!stats || stats.totalScans === 0) return '—'
     return `${Math.round((stats.anemiaDetected / stats.totalScans) * 100)}%`
@@ -122,22 +215,34 @@ function Dashboard({ username, onLogout }: { username: string; onLogout: () => v
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <img src="/anemoscan-mark.svg" alt="AnemoScan" style={{ width: 44, height: 44, flex: '0 0 auto' }} />
-          <div><div className="topbar-title">AnemoScan <span>Admin</span></div><div className="topbar-subtitle">Clinical scan management</div></div>
+          <div style={{ minWidth: 0 }}><div className="topbar-title">AnemoScan <span>Admin</span></div><div className="topbar-subtitle">Clinical scan management</div></div>
         </div>
         <div className="topbar-actions"><span className="user-pill">{username}</span><button className="ghost-button" onClick={onLogout}>Sign out</button></div>
       </header>
       <main className="content">
-        <div className="page-heading"><div><p className="eyebrow">OVERVIEW</p><h1>Scan dashboard</h1><p className="muted">Monitor stored conjunctival scans and their binary anemia results.</p></div><button className="ghost-button" onClick={() => void load()}>Refresh</button></div>
+        <div className="page-heading">
+          <div><p className="eyebrow">OVERVIEW</p><h1>Scan dashboard</h1><p className="muted">Monitor stored conjunctival scans and their binary anemia results.</p></div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="ghost-button" onClick={() => void load()} disabled={loading} aria-busy={loading} style={{ minWidth: 104 }}>{loading ? <LoadingSpinner label="Refreshing…" /> : 'Refresh'}</button>
+            <button className="ghost-button" onClick={() => void downloadAll()} disabled={downloadBusy === 'all'}>{downloadBusy === 'all' ? <LoadingSpinner label="Downloading…" /> : 'Download all (.zip)'}</button>
+          </div>
+        </div>
         {error && <div className="error-box wide">{error}</div>}
         <section className="stats-grid"><StatCard label="Total scans" value={stats?.totalScans ?? '—'} /><StatCard label="Unique patients" value={stats?.uniquePatients ?? '—'} /><StatCard label="Anemia detected" value={stats?.anemiaDetected ?? '—'} detail={stats ? anemiaRate + ' of scans' : undefined} /><StatCard label="No anemia" value={stats?.noAnemia ?? '—'} /><StatCard label="Unanalyzed" value={stats?.unanalyzed ?? '—'} /><StatCard label="Avg. probability" value={stats?.averageAnemiaProbability == null ? '—' : `${Math.round(stats.averageAnemiaProbability * 100)}%`} /></section>
         <section className="library-card">
-          <div className="library-toolbar"><div><h2>Scan library</h2><p className="muted">Search by patient ID or scan name.</p></div><div className="toolbar-actions"><input className="search-input" placeholder="Search scans…" value={query} onChange={(e) => setQuery(e.target.value)} /><select value={result} onChange={(e) => setResult(e.target.value)}><option value="all">All results</option><option value="anemia">Anemia detected</option><option value="no-anemia">No anemia</option><option value="unanalyzed">Not analyzed</option></select></div></div>
-          {loading ? <div className="empty-state">Loading scans…</div> : captures.length === 0 ? <div className="empty-state">No scans match this filter.</div> : <div className="scan-grid">{captures.map((capture) => <button className="scan-card" key={capture.id} onClick={() => setSelected(capture)}><div className="thumb-wrap"><img src={adminApi.imageUrl(capture.id)} alt="Conjunctival scan" /></div><div className="scan-card-body"><div className="scan-card-title"><strong>{capture.patientId}</strong><span>#{capture.scanNumber}</span></div><ResultBadge capture={capture} /><div className="scan-meta">{capture.age ? `${capture.age} yrs` : 'Age —'} · {capture.gender || 'Gender —'} · quality {Math.round(capture.overall)}</div>{capture.anemiaProbability != null && <div className="probability">AI probability <strong>{Math.round(capture.anemiaProbability * 100)}%</strong></div>}</div></button>)}</div>}
+          <div className="library-toolbar">
+            <div><h2>Scan library</h2><p className="muted">Search by patient ID or scan name.</p></div>
+            <div className="toolbar-actions" style={{ flexWrap: 'wrap' }}>
+              <input className="search-input" placeholder="Search scans…" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <ResultDropdown value={result} onChange={setResult} />
+            </div>
+          </div>
+          {loading ? <div className="empty-state"><LoadingSpinner label="Loading scans…" /></div> : captures.length === 0 ? <div className="empty-state">No scans match this filter.</div> : <div className="scan-grid">{captures.map((capture) => <button className="scan-card" key={capture.id} onClick={() => setSelected(capture)}><div className="thumb-wrap"><img src={adminApi.imageUrl(capture.id)} alt="Conjunctival scan" /></div><div className="scan-card-body"><div className="scan-card-title"><strong>{capture.patientId}</strong><span>#{capture.scanNumber}</span></div><ResultBadge capture={capture} /><div className="scan-meta">{capture.age ? `${capture.age} yrs` : 'Age —'} · {capture.gender || 'Gender —'} · quality {Math.round(capture.overall)}</div>{capture.anemiaProbability != null && <div className="probability">AI probability <strong>{Math.round(capture.anemiaProbability * 100)}%</strong></div>}</div></button>)}</div>}
         </section>
       </main>
-      {selected && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null) }}><aside className="detail-panel"><div className="detail-header"><div><p className="eyebrow">SCAN #{selected.scanNumber}</p><h2>{selected.patientId}</h2></div><button className="icon-button" onClick={() => setSelected(null)}>×</button></div><img className="detail-image" src={adminApi.imageUrl(selected.id)} alt="Conjunctival scan" /><div className="detail-result"><ResultBadge capture={selected} />{selected.anemiaProbability != null && <strong>{Math.round(selected.anemiaProbability * 100)}% probability</strong>}</div><dl className="detail-list"><div><dt>Scan name</dt><dd>{selected.name}</dd></div><div><dt>Patient</dt><dd>{selected.patientId}</dd></div><div><dt>Age / gender</dt><dd>{selected.age ?? '—'} / {selected.gender || '—'}</dd></div><div><dt>Quality</dt><dd>{Math.round(selected.overall)}/100</dd></div><div><dt>Created</dt><dd>{new Date(selected.createdAt).toLocaleString()}</dd></div><div><dt>Analyzed</dt><dd>{selected.analyzedAt ? new Date(selected.analyzedAt).toLocaleString() : 'Not analyzed'}</dd></div></dl><div className="detail-actions"><button className="danger-button" onClick={() => void removeCapture(selected.id)}>Delete scan</button></div></aside></div>}
+      {selected && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null) }}><aside className="detail-panel"><div className="detail-header"><div><p className="eyebrow">SCAN #{selected.scanNumber}</p><h2>{selected.patientId}</h2></div><button className="icon-button" onClick={() => setSelected(null)}>×</button></div><img className="detail-image" src={adminApi.imageUrl(selected.id)} alt="Conjunctival scan" /><div className="detail-result"><ResultBadge capture={selected} />{selected.anemiaProbability != null && <strong>{Math.round(selected.anemiaProbability * 100)}% probability</strong>}</div><dl className="detail-list"><div><dt>Scan name</dt><dd>{selected.name}</dd></div><div><dt>Patient</dt><dd>{selected.patientId}</dd></div><div><dt>Age / gender</dt><dd>{selected.age ?? '—'} / {selected.gender || '—'}</dd></div><div><dt>Quality</dt><dd>{Math.round(selected.overall)}/100</dd></div><div><dt>Created</dt><dd>{new Date(selected.createdAt).toLocaleString()}</dd></div><div><dt>Analyzed</dt><dd>{selected.analyzedAt ? new Date(selected.analyzedAt).toLocaleString() : 'Not analyzed'}</dd></div></dl><div className="detail-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}><button className="ghost-button" disabled={downloadBusy === `image-${selected.id}`} onClick={() => void downloadCapture('image', selected)}>{downloadBusy === `image-${selected.id}` ? <LoadingSpinner label="Downloading…" /> : 'Download image'}</button><button className="ghost-button" disabled={downloadBusy === `report-${selected.id}`} onClick={() => void downloadCapture('report', selected)}>{downloadBusy === `report-${selected.id}` ? <LoadingSpinner label="Preparing…" /> : 'Download report'}</button><button className="danger-button" onClick={() => void removeCapture(selected.id)}>Delete scan</button></div></aside></div>}
     </div>
   )
 }
@@ -146,7 +251,7 @@ export default function App() {
   const [username, setUsername] = useState<string | null>(null)
   const [checking, setChecking] = useState(true)
   useEffect(() => { adminApi.me().then((me) => setUsername(me.username)).catch(() => setUsername(null)).finally(() => setChecking(false)) }, [])
-  if (checking) return <main className="loading-shell">Checking admin session…</main>
+  if (checking) return <main className="loading-shell"><LoadingSpinner label="Checking admin session…" /></main>
   if (!username) return <Login onLogin={setUsername} />
   return <Dashboard username={username} onLogout={() => { void adminApi.logout().finally(() => setUsername(null)) }} />
 }
