@@ -56,6 +56,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
+async function download(path: string, filename: string): Promise<void> {
+  const response = await fetch(`${API_URL}${path}`, { credentials: 'include' })
+  if (!response.ok) {
+    let message = `Download failed (${response.status})`
+    try {
+      const body = await response.json()
+      message = body.detail || message
+    } catch {
+      // Keep the HTTP status message.
+    }
+    throw new Error(message)
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+}
+
 function csrfToken(): string {
   return document.cookie.split('; ').find((item) => item.startsWith('anemoscan_admin_csrf='))?.split('=')[1] || ''
 }
@@ -84,4 +107,7 @@ export const adminApi = {
     }),
   imageUrl: (id: number) => `${API_URL}/api/admin/captures/${id}/image`,
   exportUrl: () => `${API_URL}/api/admin/export`,
+  downloadImage: (capture: Capture) => download(`/api/admin/captures/${capture.id}/image`, `${capture.name || `scan-${capture.id}`}.jpg`),
+  downloadReport: (capture: Capture) => download(`/api/admin/captures/${capture.id}/report`, `${capture.name || `scan-${capture.id}`}-report.pdf`),
+  downloadAll: () => download('/api/admin/export', 'anemoscan-admin-export.zip'),
 }
